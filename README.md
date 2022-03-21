@@ -21,7 +21,7 @@ This module is a fork of: -
 2. Go to the admin page and select the menu and change role.
 3. Save and clear caches.
 
-Note: When creating menus, the top level menu item is ignored, this is due to
+Note: When creating menus, the top-level menu item is ignored, this is due to
 the Admin Bar in core being hard wired. See the admin page for this module
 for examples.
 

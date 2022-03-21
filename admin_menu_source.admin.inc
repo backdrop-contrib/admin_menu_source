@@ -23,8 +23,8 @@ function admin_menu_source_settings() {
     '#markup' => t('Note:<br>Only roles with permission to <b><i>Access ' .
     'administration bar</i></b> are shown here.<br><br>' .
     'Due to the Admin Bar in Core having some things hard wired you will need ' .
-    'to create a top level menu to hold your menu items.<br>' .
-    'The top level menu items are ignored and only sub items are shown.<br><br>' .
+    'to create a top-level menu to hold your menu items.<br>' .
+    'The top-level menu items are ignored and only sub-items are shown.<br><br>' .
     '<i>Example menu structure.</i><br>'.
     '<img style="padding-left:1em;" src=/'.$module_path.'/example_menu.jpg title="example menu structure"></>'),
   );

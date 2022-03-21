@@ -1,0 +1,24 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the admin_menu_source module.
+ *
+ */
+
+/**
+ * Migrate admin_menu_source variables to config.
+ */
+function admin_menu_source_update_1000() {
+  $config = config('admin_menu_source.settings');
+  $config->set('admin_menu_source_settings', update_variable_get('admin_menu_source_settings', array()));
+  $config->save();
+
+  update_variable_del('admin_menu_source_settings');
+}
+
+/**
+ * Implements hook_install().
+ */
+function admin_menu_source_install() {
+  // Dynamically generated variable data was detected.
+}

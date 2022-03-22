@@ -62,7 +62,6 @@ function admin_menu_source_admin_bar_output_alter(&$content) {
         $source_menu = $source['source'];
       }
     }
-  state_set('albany',$source_menu);
 
     if (!empty($source_menu)) {
       // Get the menu tree.

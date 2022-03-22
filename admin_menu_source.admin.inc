@@ -65,10 +65,6 @@ function admin_menu_source_settings() {
   // Add a custom submit handler.
   $form['#submit'][] = 'admin_menu_source_settings_submit';
 
-  $albany = state_get('albany');
-  backdrop_set_message('<hr><br><pre> - $albany<br>'. print_r($albany, TRUE) .'</pre>');
-  state_del('albany');
-
   return $form;
 }
 

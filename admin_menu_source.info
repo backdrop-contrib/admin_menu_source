@@ -1,6 +1,6 @@
 name = Administration Menu Source
 description = Use a different menu as the Administration Menu.
-version = 1.0.0
+version = 1.0.1
 dependencies[] = menu
 package = Administration
 backdrop = 1.x

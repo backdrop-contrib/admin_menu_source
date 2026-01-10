@@ -45,6 +45,17 @@ function admin_menu_source_theme() {
 function admin_menu_source_admin_bar_output_alter(&$content) {
   global $user;
 
+  $include_core_admin_menu = (bool) config_get('admin_menu_source.settings', 'show_core_admin_menu');
+
+  // Hide core admin bar icons when custom Menu Icon classes are present to
+  // prevent duplicated icons. Applied once per request.
+  static $icon_css_added = FALSE;
+  if (!$icon_css_added) {
+    $css = '#admin-bar .has-menu-icon .admin-bar-link-icon { display: none !important; }';
+    backdrop_add_css($css, array('type' => 'inline'));
+    $icon_css_added = TRUE;
+  }
+
   // $rid = key(array_reverse($user->roles, TRUE));
 
   // Find the user role rid.
@@ -56,10 +67,12 @@ function admin_menu_source_admin_bar_output_alter(&$content) {
   if (count($user_roles)) {
     $settings = _admin_menu_source_get_settings();
 
+    // Use the highest-priority role (lowest weight) that matches the user.
     $source_menu = '';
     foreach ($settings as $source) {
       if (in_array($source['rid'], $user_roles, TRUE)) {
         $source_menu = $source['source'];
+        break;
       }
     }
 
@@ -68,32 +81,120 @@ function admin_menu_source_admin_bar_output_alter(&$content) {
       $tree = admin_bar_tree($source_menu);
 
 
-      // Fix for special_menu_items so multiple <nolink> are supported.
-      // Replace <nolink> with <nolink-*>.
-      $count = 0;
-      foreach ($tree as &$data) {
-        if ($data['link']['href'] == '<nolink>') {
-          $data['link']['href'] = '<nolink-' . $count . '>';
-          $count++;
+      // Fix for special_menu_items so multiple <nolink> are supported at all
+      // depths. Replace <nolink> with unique <nolink-*> placeholders.
+      $nolink_counter = 0;
+      _admin_menu_source_uniquify_nolink($tree, $nolink_counter);
+
+      // If the source menu is just a single holder, promote its children so
+      // they become the visible top-level items and keep deeper nesting intact.
+      if (count($tree) === 1) {
+        $first = reset($tree);
+        if (!empty($first['below'])) {
+          $tree = $first['below'];
         }
       }
 
       // Build the menu as renderable menu links.
       $menu = admin_bar_links_menu($tree);
 
-      // Replace <nolink-*> back with <nolink>.
-      foreach ($menu as &$data) {
-        preg_match("/^<nolink.*>/", $data['#href'], $matches);
-        if (count($matches)) {
-          $data['#href'] = '<nolink>';
+      // Ensure category/overview links remain visible even without children
+      // since custom source menus may not provide nested admin category pages.
+      _admin_menu_source_force_visible_categories($menu);
+
+      // Optionally expose the core Administration menu as a dedicated dropdown
+      // so it stays accessible alongside the custom source menu.
+      if ($include_core_admin_menu) {
+        $core_tree = admin_bar_tree('admin');
+        if (empty($core_tree)) {
+          // Fallback to the default management menu name if needed.
+          $core_tree = admin_bar_tree('management');
+        }
+
+        if (!empty($core_tree)) {
+          $core_nolink_counter = 0;
+          _admin_menu_source_uniquify_nolink($core_tree, $core_nolink_counter);
+
+          if (count($core_tree) === 1) {
+            $core_first = reset($core_tree);
+            if (!empty($core_first['below'])) {
+              $core_tree = $core_first['below'];
+            }
+          }
+
+          _admin_menu_source_force_visible_categories($core_tree);
+
+          // Wrap the core tree in a synthetic root so admin_bar_links_menu
+          // produces the correct render array with dropdown behavior.
+          $core_holder = array(
+            array(
+              'link' => array(
+                'title' => t('Administration'),
+                'href' => '<nolink>',
+                'access' => TRUE,
+                'router_path' => '<nolink>',
+                'page_callback' => 'backdrop_goto',
+                'page_arguments' => array(),
+                'module' => 'admin_menu_source',
+                'hidden' => 0,
+                'weight' => 9999,
+                'type' => MENU_NORMAL_ITEM,
+                'localized_options' => array('attributes' => array('class' => array('admin-menu-source-core-admin'))),
+                'options' => array('attributes' => array('class' => array('admin-menu-source-core-admin'))),
+              ),
+              'below' => $core_tree,
+            ),
+          );
+
+          $core_render = admin_bar_links_menu($core_holder);
+          if (is_array($core_render) && !empty($core_render)) {
+            $core_item = reset($core_render);
+
+            // Normalize nolinks within the new branch and give it a stable
+            // position at the end of the bar.
+            if (is_array($core_item)) {
+              _admin_menu_source_normalize_nolink($core_item);
+              $core_item['#weight'] = 9999;
+              if (!isset($core_item['#access'])) {
+                $core_item['#access'] = TRUE;
+              }
+
+              // Append to preserve expected numeric ordering used by
+              // admin_bar rendering. The explicit weight keeps it last.
+              $menu[] = $core_item;
+            }
+          }
         }
       }
 
-      // Replace with new $menu.
-      $content['menu'] = $menu;
-      $content['menu']['#theme'] = 'admin_bar_links';
-      $content['menu']['#weight'] = 0;
-      $content['menu']['#wrapper_attributes']['id'] = 'admin-bar-menu';
+      // Preserve existing wrapper and child metadata from admin_bar, but swap
+      // in our custom menu links.
+      $default_wrapper = isset($content['menu']) && is_array($content['menu']) ? $content['menu'] : array();
+      $default_child = isset($default_wrapper['menu']) && is_array($default_wrapper['menu']) ? $default_wrapper['menu'] : array();
+
+      // Normalize nolink placeholders throughout the menu items, including the
+      // optional core admin dropdown injected above.
+      if (is_array($menu)) {
+        _admin_menu_source_normalize_nolink($menu);
+        _admin_menu_source_override_icons($menu);
+      }
+
+      // Rebuild the wrapper using defaults to match core structure.
+      $content['menu'] = $default_wrapper + array(
+        '#theme' => 'admin_bar_links',
+        '#weight' => 0,
+        '#wrapper_attributes' => array('id' => 'admin-bar-menu'),
+        '#level' => -1,
+      );
+
+      // Inject our menu items.
+      $content['menu']['menu'] = $menu;
+      // Reapply child metadata like title/icon if present.
+      foreach (array('#title', '#options', '#weight', '#level', '#wrapper_attributes') as $meta_key) {
+        if (isset($default_child[$meta_key])) {
+          $content['menu']['menu'][$meta_key] = $default_child[$meta_key];
+        }
+      }
     }
   }
 }
@@ -176,5 +277,142 @@ function _admin_menu_source_get_settings() {
     }
   }
 
+  // Ensure sorter is available (admin.inc not always loaded in alter paths).
+  if (!function_exists('_admin_menu_source_sort_by_roles')) {
+    module_load_include('inc', 'admin_menu_source', 'admin_menu_source.admin');
+  }
+  // Ensure settings are ordered by weight before consumption.
+  uasort($settings, '_admin_menu_source_sort_by_roles');
+
   return $settings;
+}
+
+/**
+ * Recursively normalize <nolink-*> placeholders back to <nolink>.
+ */
+function _admin_menu_source_normalize_nolink(array &$elements) {
+  foreach ($elements as &$element) {
+    if (is_array($element)) {
+      if (isset($element['#href'])) {
+        if (preg_match('/^<nolink.*>/', $element['#href'])) {
+          $element['#href'] = '<nolink>';
+        }
+      }
+      if (!empty($element)) {
+        _admin_menu_source_normalize_nolink($element);
+      }
+    }
+  }
+}
+
+/**
+ * Recursively allow category links without children to stay visible.
+ */
+function _admin_menu_source_force_visible_categories(array &$elements) {
+  foreach ($elements as &$element) {
+    if (is_array($element)) {
+      if (isset($element['#is_category'])) {
+        $element['#access'] = TRUE;
+        unset($element['#is_category']);
+      }
+      if (!empty($element)) {
+        _admin_menu_source_force_visible_categories($element);
+      }
+    }
+  }
+}
+
+/**
+ * Remove core admin bar icon classes when a custom icon class is present.
+ */
+function _admin_menu_source_override_icons(array &$elements) {
+  foreach ($elements as &$element) {
+    if (!is_array($element)) {
+      continue;
+    }
+
+    // Detect custom icon classes commonly added by icon modules.
+    $has_custom_icon = FALSE;
+    $class_targets = array(
+      array('path' => array('#localized_options', 'attributes', 'class'), 'key' => '#localized_options'),
+      array('path' => array('#options', 'attributes', 'class'), 'key' => '#options'),
+      array('path' => array('#attributes', 'class'), 'key' => '#attributes'),
+    );
+
+    foreach ($class_targets as $target) {
+      $classes = _admin_menu_source_get_nested($element, $target['path']);
+      if (is_array($classes)) {
+        foreach ($classes as $cls) {
+          if (preg_match('/^(fa($|\-)|fas|far|fal|fab|fa-solid|fa-regular|fa-brands|glyphicon|mdi|menu-icon)/', $cls)) {
+            $has_custom_icon = TRUE;
+            break 2;
+          }
+        }
+      }
+    }
+
+    if ($has_custom_icon) {
+      foreach ($class_targets as $target) {
+        $classes = _admin_menu_source_get_nested($element, $target['path']);
+        if (is_array($classes)) {
+          $filtered = array();
+          foreach ($classes as $cls) {
+            // Strip core icon classes (admin bar uses icon-* sprite classes).
+            if (preg_match('/^(icon-|admin-bar-icon)/', $cls)) {
+              continue;
+            }
+            $filtered[] = $cls;
+          }
+          _admin_menu_source_set_nested($element, $target['path'], $filtered);
+        }
+      }
+    }
+
+    if (!empty($element)) {
+      _admin_menu_source_override_icons($element);
+    }
+  }
+}
+
+/**
+ * Safe getter for nested array paths.
+ */
+function _admin_menu_source_get_nested(array $array, array $path) {
+  $current = $array;
+  foreach ($path as $segment) {
+    if (!is_array($current) || !array_key_exists($segment, $current)) {
+      return NULL;
+    }
+    $current = $current[$segment];
+  }
+  return $current;
+}
+
+/**
+ * Safe setter for nested array paths.
+ */
+function _admin_menu_source_set_nested(array &$array, array $path, $value) {
+  $current =& $array;
+  foreach ($path as $segment) {
+    if (!isset($current[$segment]) || !is_array($current[$segment])) {
+      $current[$segment] = array();
+    }
+    $current =& $current[$segment];
+  }
+  $current = $value;
+}
+
+/**
+ * Recursively make <nolink> hrefs unique to avoid key collisions in trees.
+ */
+function _admin_menu_source_uniquify_nolink(array &$tree, &$counter) {
+  foreach ($tree as &$item) {
+    if (!empty($item['link']['href']) && $item['link']['href'] == '<nolink>') {
+      $item['link']['href'] = '<nolink-' . $counter . '>';
+      $counter++;
+    }
+    if (!empty($item['below']) && is_array($item['below'])) {
+      _admin_menu_source_uniquify_nolink($item['below'], $counter);
+    }
+  }
 }

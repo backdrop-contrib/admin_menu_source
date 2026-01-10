@@ -1,4 +1,5 @@
 {
     "_config_name": "admin_menu_source.settings",
-    "admin_menu_source_settings": []
+    "admin_menu_source_settings": [],
+    "show_core_admin_menu": 0
 }

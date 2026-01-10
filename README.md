@@ -32,7 +32,8 @@ Bugs and Feature requests should be reported in the Issue Queue: https://github.
 
 ## Current Maintainer(s):
 - [Steve Moorhouse (albanycomputers)] (https://github.com/albanycomputers)
-- Seeking additional maintainers.
+- [Alan Mels (alanmels)] (https://github.com/alanmels)
+- Additional maintainers welcomed
 
 ## Credits:
 

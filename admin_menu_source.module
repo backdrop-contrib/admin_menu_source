@@ -45,6 +45,8 @@ function admin_menu_source_theme() {
 function admin_menu_source_admin_bar_output_alter(&$content) {
   global $user;
 
+  $include_core_admin_menu = (bool) config_get('admin_menu_source.settings', 'show_core_admin_menu');
+
   // $rid = key(array_reverse($user->roles, TRUE));
 
   // Find the user role rid.
@@ -91,13 +93,73 @@ function admin_menu_source_admin_bar_output_alter(&$content) {
       // since custom source menus may not provide nested admin category pages.
       _admin_menu_source_force_visible_categories($menu);
 
+      // Optionally expose the core Administration menu as a dedicated dropdown
+      // so it stays accessible alongside the custom source menu.
+      if ($include_core_admin_menu) {
+        $core_tree = admin_bar_tree('admin');
+        if (empty($core_tree)) {
+          // Fallback to the default management menu name if needed.
+          $core_tree = admin_bar_tree('management');
+        }
+
+        if (!empty($core_tree)) {
+          $core_nolink_counter = 0;
+          _admin_menu_source_uniquify_nolink($core_tree, $core_nolink_counter);
+
+          if (count($core_tree) === 1) {
+            $core_first = reset($core_tree);
+            if (!empty($core_first['below'])) {
+              $core_tree = $core_first['below'];
+            }
+          }
+
+          _admin_menu_source_force_visible_categories($core_tree);
+
+          // Wrap the core tree in a synthetic root so admin_bar_links_menu
+          // produces the correct render array with dropdown behavior.
+          $core_holder = array(
+            array(
+              'link' => array(
+                'title' => t('Administration'),
+                'href' => '<nolink>',
+                'access' => TRUE,
+                'localized_options' => array('attributes' => array('class' => array('admin-menu-source-core-admin'))),
+              ),
+              'below' => $core_tree,
+            ),
+          );
+
+          $core_render = admin_bar_links_menu($core_holder);
+          if (is_array($core_render) && !empty($core_render)) {
+            $core_item = reset($core_render);
+
+            // Normalize nolinks within the new branch and give it a stable
+            // position at the end of the bar.
+            if (is_array($core_item)) {
+              _admin_menu_source_normalize_nolink($core_item);
+              $core_item['#weight'] = 9999;
+              if (!isset($core_item['#access'])) {
+                $core_item['#access'] = TRUE;
+              }
+
+              // Append to preserve expected numeric ordering used by
+              // admin_bar rendering. The explicit weight keeps it last.
+              $menu[] = $core_item;
+            }
+          }
+        }
+      }
+
       // Preserve existing wrapper and child metadata from admin_bar, but swap
       // in our custom menu links.
       $default_wrapper = isset($content['menu']) && is_array($content['menu']) ? $content['menu'] : array();
       $default_child = isset($default_wrapper['menu']) && is_array($default_wrapper['menu']) ? $default_wrapper['menu'] : array();
 
-      // Normalize nolink placeholders throughout the menu items.
-      _admin_menu_source_normalize_nolink($menu);
+      // Normalize nolink placeholders throughout the menu items, including the
+      // optional core admin dropdown injected above.
+      if (is_array($menu)) {
+        _admin_menu_source_normalize_nolink($menu);
+      }
 
       // Rebuild the wrapper using defaults to match core structure.
       $content['menu'] = $default_wrapper + array(

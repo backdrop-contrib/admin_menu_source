@@ -72,24 +72,29 @@ function admin_menu_source_settings() {
  * @todo Please document this function.
  * @see http://drupal.org/node/1354
  */
-function admin_menu_source_settings_submit() {
-  $settings = _admin_menu_source_get_settings();
+function admin_menu_source_settings_submit($form, &$form_state) {
+  // Persist the freshly submitted values rather than refetching old config.
+  $settings = isset($form_state['values']['admin_menu_source_settings']) ? $form_state['values']['admin_menu_source_settings'] : array();
 
   // Sort the settings based on their weight.
   uasort($settings, '_admin_menu_source_sort_by_roles');
 
-  // normalize weights
+  // Normalize weights to consecutive integers to preserve priority order.
   $weight = 0;
   foreach ($settings as $key => $setting) {
     $settings[$key]['weight'] = $weight;
     $weight++;
   }
 
-  // re-save
+  // Re-save normalized settings and immediately rebuild the admin bar caches
+  // and dependent menu caches so changes are visible without a manual cache
+  // clear.
   config_set('admin_menu_source.settings', 'admin_menu_source_settings', $settings);
-
-  // Flush admin_menu's cache.
+  menu_cache_clear_all();
   admin_bar_flush_caches();
+  backdrop_static_reset('admin_bar_tree');
+
+  backdrop_set_message(t('Administration bar cache cleared.'));
 }
 
 /**

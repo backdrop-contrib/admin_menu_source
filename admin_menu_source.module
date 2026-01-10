@@ -47,6 +47,15 @@ function admin_menu_source_admin_bar_output_alter(&$content) {
 
   $include_core_admin_menu = (bool) config_get('admin_menu_source.settings', 'show_core_admin_menu');
 
+  // Hide core admin bar icons when custom Menu Icon classes are present to
+  // prevent duplicated icons. Applied once per request.
+  static $icon_css_added = FALSE;
+  if (!$icon_css_added) {
+    $css = '#admin-bar .has-menu-icon .admin-bar-link-icon { display: none !important; }';
+    backdrop_add_css($css, array('type' => 'inline'));
+    $icon_css_added = TRUE;
+  }
+
   // $rid = key(array_reverse($user->roles, TRUE));
 
   // Find the user role rid.
@@ -167,6 +176,7 @@ function admin_menu_source_admin_bar_output_alter(&$content) {
       // optional core admin dropdown injected above.
       if (is_array($menu)) {
         _admin_menu_source_normalize_nolink($menu);
+        _admin_menu_source_override_icons($menu);
       }
 
       // Rebuild the wrapper using defaults to match core structure.
@@ -310,6 +320,86 @@ function _admin_menu_source_force_visible_categories(array &$elements) {
       }
     }
   }
+}
+
+/**
+ * Remove core admin bar icon classes when a custom icon class is present.
+ */
+function _admin_menu_source_override_icons(array &$elements) {
+  foreach ($elements as &$element) {
+    if (!is_array($element)) {
+      continue;
+    }
+
+    // Detect custom icon classes commonly added by icon modules.
+    $has_custom_icon = FALSE;
+    $class_targets = array(
+      array('path' => array('#localized_options', 'attributes', 'class'), 'key' => '#localized_options'),
+      array('path' => array('#options', 'attributes', 'class'), 'key' => '#options'),
+      array('path' => array('#attributes', 'class'), 'key' => '#attributes'),
+    );
+
+    foreach ($class_targets as $target) {
+      $classes = _admin_menu_source_get_nested($element, $target['path']);
+      if (is_array($classes)) {
+        foreach ($classes as $cls) {
+          if (preg_match('/^(fa($|\-)|fas|far|fal|fab|fa-solid|fa-regular|fa-brands|glyphicon|mdi|menu-icon)/', $cls)) {
+            $has_custom_icon = TRUE;
+            break 2;
+          }
+        }
+      }
+    }
+
+    if ($has_custom_icon) {
+      foreach ($class_targets as $target) {
+        $classes = _admin_menu_source_get_nested($element, $target['path']);
+        if (is_array($classes)) {
+          $filtered = array();
+          foreach ($classes as $cls) {
+            // Strip core icon classes (admin bar uses icon-* sprite classes).
+            if (preg_match('/^(icon-|admin-bar-icon)/', $cls)) {
+              continue;
+            }
+            $filtered[] = $cls;
+          }
+          _admin_menu_source_set_nested($element, $target['path'], $filtered);
+        }
+      }
+    }
+
+    if (!empty($element)) {
+      _admin_menu_source_override_icons($element);
+    }
+  }
+}
+
+/**
+ * Safe getter for nested array paths.
+ */
+function _admin_menu_source_get_nested(array $array, array $path) {
+  $current = $array;
+  foreach ($path as $segment) {
+    if (!is_array($current) || !array_key_exists($segment, $current)) {
+      return NULL;
+    }
+    $current = $current[$segment];
+  }
+  return $current;
+}
+
+/**
+ * Safe setter for nested array paths.
+ */
+function _admin_menu_source_set_nested(array &$array, array $path, $value) {
+  $current =& $array;
+  foreach ($path as $segment) {
+    if (!isset($current[$segment]) || !is_array($current[$segment])) {
+      $current[$segment] = array();
+    }
+    $current =& $current[$segment];
+  }
+  $current = $value;
 }
 
 /**

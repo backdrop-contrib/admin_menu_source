@@ -31,8 +31,8 @@ Additional documentation is located in the Wiki: https://github.com/backdrop-con
 Bugs and Feature requests should be reported in the Issue Queue: https://github.com/backdrop-contrib/admin_menu_source/issues
 
 ## Current Maintainer(s):
-- [Steve Moorhouse (albanycomputers)] (https://github.com/albanycomputers)
-- [Alan Mels (alanmels)] (https://github.com/alanmels)
+- [Steve Moorhouse(albanycomputers)](https://github.com/albanycomputers)
+- [Alan Mels](https://github.com/alanmels)
 - Additional maintainers welcomed
 
 ## Credits:

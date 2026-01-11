@@ -31,17 +31,17 @@ Additional documentation is located in the Wiki: https://github.com/backdrop-con
 Bugs and Feature requests should be reported in the Issue Queue: https://github.com/backdrop-contrib/admin_menu_source/issues
 
 ## Current Maintainer(s):
-- [Steve Moorhouse(albanycomputers)](https://github.com/albanycomputers)
+- [Steve Moorhouse (albanycomputers)](https://github.com/albanycomputers)
 - [Alan Mels](https://github.com/alanmels)
 - Additional maintainers welcomed
 
 ## Credits:
 
 ### Original Authors 
-shadcn (shadcn) https://www.drupal.org/u/shadcn
+[shadcn (shadcn)](https://www.drupal.org/u/shadcn)
 
 ## Sponsorship:
- - [Albany Computer Services] (https://www.albany-computers.co.uk)
+ - [Albany Computer Services](https://www.albany-computers.co.uk)
 
 ## License
 This project is GPL v2 software. See the LICENSE.txt file in this directory for complete text.

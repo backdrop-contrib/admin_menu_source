@@ -47,15 +47,6 @@ function admin_menu_source_admin_bar_output_alter(&$content) {
 
   $include_core_admin_menu = (bool) config_get('admin_menu_source.settings', 'show_core_admin_menu');
 
-  // Hide core admin bar icons when custom Menu Icon classes are present to
-  // prevent duplicated icons. Applied once per request.
-  static $icon_css_added = FALSE;
-  if (!$icon_css_added) {
-    $css = '#admin-bar .has-menu-icon .admin-bar-link-icon { display: none !important; }';
-    backdrop_add_css($css, array('type' => 'inline'));
-    $icon_css_added = TRUE;
-  }
-
   // $rid = key(array_reverse($user->roles, TRUE));
 
   // Find the user role rid.

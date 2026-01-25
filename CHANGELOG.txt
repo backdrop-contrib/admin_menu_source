@@ -1,3 +1,11 @@
+Admin Menu Source 1.x-1.0.2, 2026-01-25
+-------------------
+- Require Menu Tools dependency so menu snapshots/restores stay in sync.
+- Move configuration to the Admin Bar "Source" tab alongside core settings with updated menu paths.
+- Clear Admin Bar and menu caches automatically after saving source changes.
+- Fix enable message link to the Source configuration page.
+- Refresh README.md with installation steps and maintainer note.
+
 2022-03-17 - Backdrop - Coder upgrade - converted to Backdrop CMS
 
 Admin Menu Source 7.x-1.1, 2016-04-01

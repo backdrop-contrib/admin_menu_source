@@ -1,25 +1,22 @@
 # Admin Menu Source
 
-This integrates with the standard Admin Bar where you can specify which menu
-items should be shown for each role.
-
-The role must have *access administration bar* permission.
+Choose a custom source menu for the Admin Bar per role. Only roles with
+*access administration bar* permission are eligible.
 
 ## Requirements:
-No dependencies
+- Menu module (core)
+- Menu Tools module (for snapshots/restores)
 
 ## Installation:
-Install this module using the official Backdrop CMS instructions at https://docs.backdropcms.org/documentation/extend-with-modules
-
-Visit the configuration page under /admin/config/administration/admin_bar/source
+1. Download/clone into modules/contrib, then enable Menu Tools and Admin Menu Source at Administration → Modules.
+2. Open Configuration → Administration → Admin Bar → Source (admin/config/administration/admin-bar/source) and pick a source menu for each eligible role.
+3. Save source; the Admin Bar cache clears automatically.
 
 ## Documentation:
-This module is a fork of: -
- http://drupal.org/project/admin_menu_source Version 7.x-1.1+13-dev
 
 1. Use an existing menu or create a new menu for a Role.
-2. Go to the admin page and select the menu and change role.
-3. Save and clear caches.
+2. Go to the Admin bar → Source tab and select the menu per role.
+3. Save source; caches are cleared automatically.
 
 Note: When creating menus, the top-level menu item is ignored, this is due to
 the Admin Bar in core being hard wired. See the admin page for this module
@@ -33,7 +30,7 @@ Bugs and Feature requests should be reported in the Issue Queue: https://github.
 ## Current Maintainer(s):
 - [Steve Moorhouse (albanycomputers)](https://github.com/albanycomputers)
 - [Alan Mels](https://github.com/alanmels)
-- Additional maintainers welcomed
+- Additional maintainers welcome
 
 ## Credits:
 

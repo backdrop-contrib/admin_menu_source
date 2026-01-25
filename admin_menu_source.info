@@ -1,7 +1,8 @@
 name = Administration Bar Source
 description = Use a different menu on the Administration Bar.
 dependencies[] = menu
+dependencies[] = menu_tools
 package = Administration
 backdrop = 1.x
 type = module
-configure = admin/config/administration/admin_bar/source
+configure = admin/config/administration/admin-bar/source

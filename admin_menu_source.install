@@ -22,3 +22,11 @@ function admin_menu_source_update_1000() {
 function admin_menu_source_install() {
   // Dynamically generated variable data was detected.
 }
+
+/**
+ * Implements hook_enable().
+ */
+function admin_menu_source_enable() {
+  backdrop_set_message(t("The 'Administration Bar Source' module was enabled."));
+  backdrop_set_message(t('Configure the admin bar source at !link.', array('!link' => l(t('Admin bar → Source'), 'admin/config/administration/admin-bar/source'))), 'status');
+}

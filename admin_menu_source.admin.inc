@@ -21,13 +21,7 @@ function admin_menu_source_settings() {
   $form['#theme'] = 'admin_menu_source_settings_form';
 
   $form['admin_menu_source_description'] = array(
-    '#markup' => t('Note:<br>Only roles with permission to <b><i>Access ' .
-    'administration bar</i></b> are shown here.<br><br>' .
-    'Due to the Admin Bar in Core having some things hard wired you will need ' .
-    'to create a top-level menu to hold your menu items.<br>' .
-    'The top-level menu items are ignored and only sub-items are shown.<br><br>' .
-    '<i>Example menu structure.</i><br>' .
-    '<img style="padding-left:1em;" src=/' . $module_path . '/example_menu.jpg title="example menu structure"></>'),
+    '#markup' => t('Give eligible roles "Access administration bar." Build your admin menu under a single top-level holder item; that holder won\'t display — only its child links appear in the bar.<br><br><i>Example menu structure.</i><br><img style="padding-left:1em;" src=/' . $module_path . '/example_menu.jpg title="example menu structure"></>'),
   );
 
   $form['admin_menu_source_settings'] = array(

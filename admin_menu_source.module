@@ -10,18 +10,24 @@
 function admin_menu_source_menu() {
   $items = array();
 
-  $items['admin/config/administration/admin_bar/settings'] = array(
+  $items['admin/config/administration/admin-bar/settings'] = array(
     'title' => 'Settings',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('admin_bar_theme_settings'),
+    'access arguments' => array('administer site configuration'),
     'type' => MENU_DEFAULT_LOCAL_TASK,
+    'file' => 'admin_bar.inc',
+    'file path' => backdrop_get_path('module', 'admin_bar'),
   );
 
-  $items['admin/config/administration/admin_bar/source'] = array(
-    'title' => 'Admin Menu Source',
+  $items['admin/config/administration/admin-bar/source'] = array(
+    'title' => 'Source',
     'description' => 'Configure the source for the administration menu bar.',
     'page callback' => 'backdrop_get_form',
     'page arguments' => array('admin_menu_source_settings'),
     'access arguments' => array('administer site configuration'),
     'type' => MENU_LOCAL_TASK,
+    'weight' => 1,
     'file' => 'admin_menu_source.admin.inc',
   );
 

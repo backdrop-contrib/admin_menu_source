@@ -93,7 +93,12 @@ function admin_menu_source_settings_submit($form, &$form_state) {
   // clear.
   config_set('admin_menu_source.settings', 'admin_menu_source_settings', $settings);
   menu_cache_clear_all();
+
+  // Aggressively clear admin bar caches so the new source is reflected
+  // without requiring a manual cache clear.
   admin_bar_flush_caches();
+  cache('admin_bar')->flush();
+  cache('menu')->flush();
   backdrop_static_reset('admin_bar_tree');
 
   backdrop_set_message(t('Administration bar cache cleared.'));

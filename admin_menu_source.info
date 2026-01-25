@@ -1,5 +1,5 @@
 name = Administration Bar Source
-description = Use a different menu on the Administration Bar.
+description = Use a custom source menu for the Administration bar (per role).
 dependencies[] = menu
 dependencies[] = menu_tools
 package = Administration

@@ -64,6 +64,11 @@ function admin_menu_source_settings() {
 
   $form = system_settings_form($form);
 
+  // Adjust submit button label to reflect selecting a source menu.
+  if (isset($form['actions']['submit'])) {
+    $form['actions']['submit']['#value'] = t('Save source');
+  }
+
   // Add a custom submit handler.
   $form['#submit'][] = 'admin_menu_source_settings_submit';
 
